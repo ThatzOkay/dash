@@ -61,6 +61,27 @@ class RadioPlayerTab : public QWidget {
 
 };
 
+class DabPlayerTab : public QWidget {
+    Q_OBJECT
+
+   public:
+    DabPlayerTab(Arbiter &arbiter, QWidget *parent = nullptr);
+    ~DabPlayerTab();
+
+   private:
+    static QMap<QString, QFileInfo> get_plugins();
+
+    Arbiter &arbiter;
+    Config *config;
+    QMap<QString, QFileInfo> plugins;
+    QPluginLoader loader;
+    Selector *plugin_selector;
+
+    void load_plugin();
+    QWidget *dialog_body();
+    QWidget *settings_widget();
+};
+
 class LocalPlayerTab : public QWidget {
     Q_OBJECT
 

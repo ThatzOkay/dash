@@ -20,11 +20,17 @@ int main(int argc, char *argv[])
     QSettings settings;
     DASH_LOG(info) << "loaded config: " << settings.fileName().toStdString();
 
+    Qt::WindowFlags flags = Qt::FramelessWindowHint;
+
     QStringList args = dash.arguments();
     if (args.size() > 2) {
         size = QSize(args.at(1).toInt(), args.at(2).toInt());
         if (args.size() > 4)
             pos = QPoint(args.at(3).toInt(), args.at(4).toInt());
+        
+        if (args.size() > 5)
+            flags = static_cast<Qt::WindowFlags>(args.at(5).toInt());
+
         fullscreen = false;
     }
     else {
@@ -46,7 +52,7 @@ int main(int argc, char *argv[])
 
     MainWindow window(QRect(pos, size));
     window.setWindowIcon(QIcon(":/logo.png"));
-    window.setWindowFlags(Qt::FramelessWindowHint);
+    window.setWindowFlags(flags);
     if (fullscreen)
         window.setWindowState(Qt::WindowFullScreen);
 

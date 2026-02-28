@@ -8,9 +8,12 @@
 #include <QListWidgetItem>
 #include <QMediaPlaylist>
 
+#include "app/widgets/spinner.hpp"
+
 #include "app/window.hpp"
 #include "app/pages/media.hpp"
 #include "plugins/radio_plugin.hpp"
+#include "plugins/dab_plugin.hpp"
 
 MediaPage::MediaPage(Arbiter &arbiter, QWidget *parent)
     : QTabWidget(parent)
@@ -22,6 +25,7 @@ MediaPage::MediaPage(Arbiter &arbiter, QWidget *parent)
 void MediaPage::init()
 {
     this->addTab(new RadioPlayerTab(this->arbiter, this), "Radio");
+    this->addTab(new DabPlayerTab(this->arbiter, this), "DAB");
     this->addTab(new BluetoothPlayerTab(this->arbiter, this), "Bluetooth");
     this->addTab(new LocalPlayerTab(this->arbiter, this), "Local");
 }
@@ -282,6 +286,85 @@ QWidget *RadioPlayerTab::controls_widget()
     layout->addWidget(prev_station);
     layout->addWidget(this->tuner, 4);
     layout->addWidget(next_station);
+    layout->addStretch(1);
+
+    return widget;
+}
+
+QMap<QString, QFileInfo> DabPlayerTab::get_plugins()
+{
+    QMap<QString, QFileInfo> plugins;
+    for (auto plugin : Session::plugin_dir("dab").entryInfoList(QDir::Files)) {
+        if (QLibrary::isLibrary(plugin.absoluteFilePath()))
+            plugins[Session::fmt_plugin(plugin.baseName())] = plugin;
+    }
+
+    return plugins;
+}
+
+DabPlayerTab::DabPlayerTab(Arbiter &arbiter, QWidget *parent)
+    : QWidget(parent)
+    , arbiter(arbiter)
+    , config(Config::get_instance())
+    , plugins(DabPlayerTab::get_plugins())
+    , loader()
+    , plugin_selector(new Selector(this->plugins.keys(), this->config->get_dab_plugin(), this->arbiter.forge().font(14), this->arbiter, nullptr, "unloader"))
+{
+    auto layout = new QVBoxLayout(this);
+    layout->addWidget(this->settings_widget(), 0, Qt::AlignRight);
+    layout->addStretch(1);
+    layout->addWidget(new Spinner(this), 0, Qt::AlignCenter);
+    layout->addStretch(1);
+}
+
+DabPlayerTab::~DabPlayerTab()
+{
+}
+
+void DabPlayerTab::load_plugin()
+{
+    if (this->loader.isLoaded())
+        this->loader.unload();
+
+    auto key = this->plugin_selector->get_current();
+    if (!key.isNull()) {
+        this->loader.setFileName(this->plugins[key].absoluteFilePath());
+    }
+    this->config->set_dab_plugin(key);
+}
+
+QWidget *DabPlayerTab::dialog_body()
+{
+    auto widget = new QWidget(this);
+    auto layout = new QVBoxLayout(widget);
+
+    layout->addStretch();
+    layout->addWidget(this->plugin_selector, 0, Qt::AlignCenter);
+    layout->addStretch();
+
+    return widget;
+}
+
+QWidget *DabPlayerTab::settings_widget()
+{
+    auto widget = new QWidget(this);
+    auto layout = new QHBoxLayout(widget);
+    layout->setSpacing(0);
+
+    auto dialog = new Dialog(this->arbiter, true, this->window());
+    dialog->set_body(this->dialog_body());
+
+    auto load_button = new QPushButton("load");
+    connect(load_button, &QPushButton::clicked, [this]{ this->load_plugin(); });
+    dialog->set_button(load_button);
+
+    auto settings_button = new QPushButton();
+    settings_button->setFlat(true);
+    this->arbiter.forge().iconize("settings", settings_button, 24);
+    connect(settings_button, &QPushButton::clicked, [dialog]{ dialog->open(); });
+
+    layout->addStretch(1);
+    layout->addWidget(settings_button);
     layout->addStretch(1);
 
     return widget;
