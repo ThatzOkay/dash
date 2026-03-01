@@ -187,6 +187,7 @@ dependencies=(
 "autoconf"
 "ffmpeg"
 "libgps-dev"
+"libabsl-dev"
 )
 
 
@@ -229,7 +230,7 @@ if [ $pulseaudio = false ]
   else
     #change to project root
     cd $script_path
-    
+
     echo Preparing to compile and install pulseaudio
     echo Grabbing pulseaudio deps
     sudo sed -i 's/#deb-src/deb-src/g' /etc/apt/sources.list
@@ -342,7 +343,7 @@ else
   cd build
 
   #beginning cmake - use system protobuf to avoid version mismatch with openauto
-  cmake -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_PROTOBUF=ON -DSKIP_BUILD_ABSL=ON ../
+  cmake -DCMAKE_BUILD_TYPE=Release  -DSKIP_BUILD_PROTOBUF=ON -DSKIP_BUILD_ABSL=OFF ../
   if [[ $? -eq 0 ]]; then
       echo -e Aasdk CMake completed successfully'\n'
   else
