@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #repo addresses
-aasdkRepo="https://github.com/ThatzOkay/aasdk"
+aasdkRepo="https://github.com/OpenDsh/aasdk" #"https://github.com/ThatzOkay/aasdk" Once ive fixed openauto i'll use newer aasdk from crankshaft
 gstreamerRepo="https://github.com/ThatzOkay/qt-gstreamer"
-openautoRepo="https://github.com/ThatzOkay/openauto"
+openautoRepo="https://github.com/openDsh/openauto" #"https://github.com/ThatzOkay/openauto"
 h264bitstreamRepo="https://github.com/aizvorski/h264bitstream"
 pulseaudioRepo="https://gitlab.freedesktop.org/pulseaudio/pulseaudio.git"
 
@@ -61,7 +61,7 @@ then
   installArgs="-DRPI_BUILD=true"
   isRpi=true
 else
-  installArgs="-DNOPI=ON"
+  installArgs=""
   isRpi=false
 fi
 
@@ -230,7 +230,7 @@ if [ $pulseaudio = false ]
   else
     #change to project root
     cd $script_path
-
+    
     echo Preparing to compile and install pulseaudio
     echo Grabbing pulseaudio deps
     sudo sed -i 's/#deb-src/deb-src/g' /etc/apt/sources.list
@@ -289,12 +289,12 @@ if [ $bluez = false ]
 
     echo Installing bluez
     sudo apt-get install -y libdbus-1-dev libudev-dev libical-dev libreadline-dev libjson-c-dev
-    wget www.kernel.org/pub/linux/bluetooth/bluez-5.86.tar.xz
-    tar -xvf bluez-5.86.tar.xz bluez-5.86/
-    rm bluez-5.86.tar.xz
-    cd bluez-5.86
+    wget www.kernel.org/pub/linux/bluetooth/bluez-5.63.tar.xz
+    tar -xvf bluez-5.63.tar.xz bluez-5.63/
+    rm bluez-5.63.tar.xz
+    cd bluez-5.63
     ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --enable-library --disable-manpages --enable-deprecated
-    make -j4
+    make
     sudo make install
     cd ..
 fi
@@ -342,8 +342,8 @@ else
 
   cd build
 
-  #beginning cmake - use system protobuf to avoid version mismatch with openauto
-  cmake -DCMAKE_BUILD_TYPE=Release  -DSKIP_BUILD_PROTOBUF=ON -DSKIP_BUILD_ABSL=OFF ../
+  #beginning cmake
+  cmake -DCMAKE_BUILD_TYPE=Release ../
   if [[ $? -eq 0 ]]; then
       echo -e Aasdk CMake completed successfully'\n'
   else
@@ -352,7 +352,7 @@ else
   fi
 
   #beginning make
-  make -j4
+  make -j2
 
   if [[ $? -eq 0 ]]; then
     echo -e Aasdk Make completed successfully '\n'
@@ -423,7 +423,7 @@ else
   fi
 
   #beginning make
-  make -j4
+  make
 
   if [[ $? -eq 0 ]]; then
     echo -e h264bitstream Make completed successfully '\n'
@@ -502,7 +502,7 @@ if [ $gstreamer = true ]; then
 
   #run cmake
   echo Beginning cmake
-  cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH) -DCMAKE_INSTALL_INCLUDEDIR=include -DQT_VERSION=5 -DQTGSTREAMER_EXAMPLES=off -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-std=c++11
+  cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib/$(dpkg-architecture -qDEB_HOST_MULTIARCH) -DCMAKE_INSTALL_INCLUDEDIR=include -DQT_VERSION=5 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-std=c++11
 
   if [[ $? -eq 0 ]]; then
     echo -e Make ok'\n'
@@ -512,7 +512,7 @@ if [ $gstreamer = true ]; then
   fi
 
   echo Making Gstreamer
-  make -j4
+  make
 
   if [[ $? -eq 0 ]]; then
     echo -e Gstreamer make ok'\n'
@@ -591,7 +591,7 @@ else
   fi
 
   echo Beginning openauto make
-  make -j4
+  make
 
   if [[ $? -eq 0 ]]; then
     echo -e Openauto make OK'\n'
@@ -644,7 +644,7 @@ else
   fi
 
   echo Running Dash make
-  make -j4
+  make
   
   if [[ $? -eq 0 ]]; then
       echo -e Dash make ok, executable can be found ../bin/dash
