@@ -11,7 +11,7 @@
 #include "app/pages/page.hpp"
 #include "app/quick_views/quick_view.hpp"
 #include "app/widgets/fullscreen_toggler.hpp"
-#include "openauto/Service/InputService.hpp"
+//#include "f1x/openauto/autoapp/Service/InputService.hpp"
 
 class MainWindow;
 

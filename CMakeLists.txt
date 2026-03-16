@@ -19,7 +19,10 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+    "${CMAKE_SOURCE_DIR}/cmake_modules/"
+    "${CMAKE_SOURCE_DIR}/openauto/cmake_modules/"
+    "${CMAKE_SOURCE_DIR}/aasdk/cmake_modules/")
 SET(CMAKE_CXX_STANDARD 14)
 set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} -rdynamic)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT} -Wall -pedantic -fPIC")
@@ -37,11 +40,37 @@ find_package(libusb-1.0 REQUIRED)
 find_package(Qt5 COMPONENTS Multimedia MultimediaWidgets Bluetooth Qml Quick QuickWidgets SerialBus SerialPort WebSockets DBus Xml Svg REQUIRED)
 find_package(KF5BluezQt REQUIRED)
 find_package(Protobuf REQUIRED)
+find_package(aap_protobuf QUIET)
 find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
 find_package(taglib REQUIRED)
 find_package(aasdk REQUIRED)
 find_package(openauto REQUIRED)
+
+# Prefer modern aap_protobuf naming, fallback to legacy aasdk_proto linkage.
+set(AA_PROTO_INCLUDE_DIRS ${AASDK_PROTO_INCLUDE_DIRS})
+if(DEFINED AASDK_PROTO_LIBRARIES AND NOT "${AASDK_PROTO_LIBRARIES}" STREQUAL "")
+    set(AA_PROTO_LIBRARIES ${AASDK_PROTO_LIBRARIES})
+else()
+    set(AA_PROTO_LIBRARIES aasdk_proto)
+endif()
+
+if(AAP_PROTOBUF_FOUND)
+    set(AA_PROTO_INCLUDE_DIRS
+        ${AAP_PROTOBUF_INCLUDE_DIRS}
+        ${AAP_PROTOBUF_INCLUDE_DIR}
+    )
+
+    if(TARGET aap_protobuf)
+        set(AA_PROTO_LIBRARIES aap_protobuf)
+    elseif(DEFINED AAP_PROTOBUF_LIB_DIRS AND NOT "${AAP_PROTOBUF_LIB_DIRS}" STREQUAL "")
+        set(AA_PROTO_LIBRARIES ${AAP_PROTOBUF_LIB_DIRS})
+    elseif(DEFINED AAP_PROTOBUF_LIB_DIR AND NOT "${AAP_PROTOBUF_LIB_DIR}" STREQUAL "")
+        set(AA_PROTO_LIBRARIES ${AAP_PROTOBUF_LIB_DIR})
+    endif()
+endif()
+
+list(REMOVE_DUPLICATES AA_PROTO_INCLUDE_DIRS)
 
 if(RPI_BUILD AND NOT GST_BUILD)
     add_definitions(-DUSE_OMX -DOMX_SKIP64BIT)
@@ -106,7 +135,7 @@ target_include_directories(dash SYSTEM PRIVATE
     ${PROTOBUF_INCLUDE_DIR}
     ${OPENSSL_INCLUDE_DIR}
     ${RTAUDIO_INCLUDE_DIRS}
-    ${AASDK_PROTO_INCLUDE_DIRS}
+    ${AA_PROTO_INCLUDE_DIRS}
     ${AASDK_INCLUDE_DIRS}
     ${OPENAUTO_INCLUDE_DIRS}
     ${BCM_HOST_INCLUDE_DIRS}
@@ -118,7 +147,7 @@ target_include_directories(dash SYSTEM PRIVATE
     )
 
 target_link_libraries(dash
-    aasdk_proto
+    ${AA_PROTO_LIBRARIES}
     aasdk
     openauto
     ${Boost_LIBRARIES}

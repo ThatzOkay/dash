@@ -31,7 +31,7 @@ FOREACH(plugin_type ${plugin_types})
             ${PROTOBUF_INCLUDE_DIR}
             ${OPENSSL_INCLUDE_DIR}
             ${RTAUDIO_INCLUDE_DIRS}
-            ${AASDK_PROTO_INCLUDE_DIRS}
+            ${AA_PROTO_INCLUDE_DIRS}
             ${AASDK_INCLUDE_DIRS}
             ${OPENAUTO_INCLUDE_DIRS}
             ${BCM_HOST_INCLUDE_DIRS}
@@ -43,7 +43,7 @@ FOREACH(plugin_type ${plugin_types})
             ${include_directory}
         )
         target_link_libraries(${plugin}
-            aasdk_proto
+          ${AA_PROTO_LIBRARIES}
             aasdk
             openauto
             ${Qt5DBus_LIBRARIES}

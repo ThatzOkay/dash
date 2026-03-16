@@ -1,6 +1,6 @@
 #pragma once
 
-#include "openauto/Configuration/Configuration.hpp"
+#include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
 #include "canbus/ICANBus.hpp"
 
 #include <QObject>
@@ -20,8 +20,8 @@ class Config : public QObject {
     Q_OBJECT
 
    public:
-    std::shared_ptr<openauto::configuration::Configuration> openauto_config;
-    openauto::configuration::Configuration::ButtonCodes openauto_button_codes;
+    std::shared_ptr<f1x::openauto::autoapp::configuration::Configuration> openauto_config;
+    f1x::openauto::autoapp::configuration::Configuration::ButtonCodes openauto_button_codes;
 
     Config();
 

@@ -2,7 +2,7 @@
 
 #include <QMap>
 #include <QtWidgets>
-#include "openauto/Configuration/Configuration.hpp"
+#include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
 
 #include "app/config.hpp"
 

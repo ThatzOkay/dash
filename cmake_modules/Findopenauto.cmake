@@ -1,14 +1,12 @@
-set (OPENAUTO_DIR ~/openauto)
-
 find_path(OPENAUTO_INCLUDE_DIR
-    OpenautoLog.hpp
-    PATHS ${OPENAUTO_DIR}
+    f1x/openauto/Common/Log.hpp
+    PATHS /usr/local /usr
     PATH_SUFFIXES include
 )
 
-find_path(OPENAUTO_LIB_DIR
-    libopenauto.so
-    PATHS ${OPENAUTO_DIR}
+find_library(OPENAUTO_LIB_DIR
+    NAMES openauto
+    PATHS /usr/local /usr
     PATH_SUFFIXES lib
 )
 
@@ -24,8 +22,7 @@ if (OPENAUTO_FOUND)
     endif()
     add_library(openauto INTERFACE)
     target_include_directories(openauto INTERFACE ${OPENAUTO_INCLUDE_DIR}) 
-    set_target_properties(openauto PROPERTIES INTERFACE_LINK_DIRECTORIES ${OPENAUTO_LIB_DIR})
-    target_link_libraries(openauto INTERFACE libopenauto.so )
+    target_link_libraries(openauto INTERFACE ${OPENAUTO_LIB_DIR})
 else()
     if (openauto_FIND_REQUIRED)
                message(FATAL_ERROR "Could not find openauto")

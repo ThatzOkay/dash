@@ -14,21 +14,21 @@ OpenAutoWorker::OpenAutoWorker(std::function<void(bool)> callback, bool night_mo
       usb_wrapper((libusb_init(&usb_context), usb_context)),
       query_factory(usb_wrapper, io_service),
       query_chain_factory(usb_wrapper, io_service, query_factory),
-      service_factory(io_service, configuration, frame, callback, night_mode),
+      service_factory(io_service, configuration),
       android_auto_entity_factory(io_service, configuration, service_factory),
       usb_hub(std::make_shared<aasdk::usb::USBHub>(usb_wrapper, io_service, query_chain_factory)),
       connected_accessories_enumerator(
           std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usb_wrapper, io_service, query_chain_factory)),
-      app(std::make_shared<openauto::App>(io_service, usb_wrapper, tcp_wrapper, android_auto_entity_factory, usb_hub,
+      app(std::make_shared<f1x::openauto::autoapp::App>(io_service, usb_wrapper, tcp_wrapper, android_auto_entity_factory, usb_hub,
                                           connected_accessories_enumerator))
 {
     this->create_usb_workers();
     this->create_io_service_workers();
 
-    this->app->waitForDevice(true);
-    AAHandler *aa_handler = arbiter.android_auto().handler;
-    service_factory.setAndroidAutoInterface(aa_handler);
-    aa_handler->setServiceFactory(&service_factory);
+    this->app->waitForUSBDevice();
+    // AAHandler *aa_handler = arbiter.android_auto().handler;
+    // service_factory.setAndroidAutoInterface(aa_handler);
+    // aa_handler->setServiceFactory(&service_factory);
 }
 
 
@@ -118,11 +118,11 @@ QLayout *OpenAutoPage::Settings::rhd_row_widget()
     Switch *toggle = new Switch();
     toggle->scale(this->arbiter.layout().scale);
     toggle->setChecked(this->config->openauto_config->getHandednessOfTrafficType() ==
-                       openauto::configuration::HandednessOfTrafficType::RIGHT_HAND_DRIVE);
+                       f1x::openauto::autoapp::configuration::HandednessOfTrafficType::RIGHT_HAND_DRIVE);
     connect(toggle, &Switch::stateChanged, [config = this->config](bool state) {
         config->openauto_config->setHandednessOfTrafficType(
-            state ? openauto::configuration::HandednessOfTrafficType::RIGHT_HAND_DRIVE
-                  : openauto::configuration::HandednessOfTrafficType::LEFT_HAND_DRIVE);
+            state ? f1x::openauto::autoapp::configuration::HandednessOfTrafficType::RIGHT_HAND_DRIVE
+                  : f1x::openauto::autoapp::configuration::HandednessOfTrafficType::LEFT_HAND_DRIVE);
     });
     layout->addWidget(toggle, 1, Qt::AlignHCenter);
 
@@ -140,15 +140,15 @@ QLayout *OpenAutoPage::Settings::frame_rate_row_widget()
     QVBoxLayout *group_layout = new QVBoxLayout(group);
 
     QRadioButton *fps_30_button = new QRadioButton("30fps", group);
-    fps_30_button->setChecked(this->config->openauto_config->getVideoFPS() == aasdk::proto::enums::VideoFPS::_30);
+    fps_30_button->setChecked(this->config->openauto_config->getVideoFPS() == aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_30);
     connect(fps_30_button, &QRadioButton::clicked,
-            [config = this->config]() { config->openauto_config->setVideoFPS(aasdk::proto::enums::VideoFPS::_30); });
+            [config = this->config]() { config->openauto_config->setVideoFPS(aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_30); });
     group_layout->addWidget(fps_30_button);
 
     QRadioButton *fps_60_button = new QRadioButton("60fps", group);
-    fps_60_button->setChecked(this->config->openauto_config->getVideoFPS() == aasdk::proto::enums::VideoFPS::_60);
+    fps_60_button->setChecked(this->config->openauto_config->getVideoFPS() == aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);
     connect(fps_60_button, &QRadioButton::clicked,
-            [config = this->config]() { config->openauto_config->setVideoFPS(aasdk::proto::enums::VideoFPS::_60); });
+            [config = this->config]() { config->openauto_config->setVideoFPS(aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60); });
     group_layout->addWidget(fps_60_button);
 
     layout->addWidget(group, 1, Qt::AlignHCenter);
@@ -168,25 +168,25 @@ QLayout *OpenAutoPage::Settings::resolution_row_widget()
 
     QRadioButton *res_480_button = new QRadioButton("480p", group);
     res_480_button->setChecked(this->config->openauto_config->getVideoResolution() ==
-                               aasdk::proto::enums::VideoResolution::_480p);
+                               aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
     connect(res_480_button, &QRadioButton::clicked, [config = this->config]() {
-        config->openauto_config->setVideoResolution(aasdk::proto::enums::VideoResolution::_480p);
+        config->openauto_config->setVideoResolution(aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
     });
     group_layout->addWidget(res_480_button);
 
     QRadioButton *res_720_button = new QRadioButton("720p", group);
     res_720_button->setChecked(this->config->openauto_config->getVideoResolution() ==
-                               aasdk::proto::enums::VideoResolution::_720p);
+                               aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1280x720);
     connect(res_720_button, &QRadioButton::clicked, [config = this->config]() {
-        config->openauto_config->setVideoResolution(aasdk::proto::enums::VideoResolution::_720p);
+        config->openauto_config->setVideoResolution(aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1280x720);
     });
     group_layout->addWidget(res_720_button);
 
     QRadioButton *res_1080_button = new QRadioButton("1080p", group);
     res_1080_button->setChecked(this->config->openauto_config->getVideoResolution() ==
-                                aasdk::proto::enums::VideoResolution::_1080p);
+                                aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1920x1080);
     connect(res_1080_button, &QRadioButton::clicked, [config = this->config]() {
-        config->openauto_config->setVideoResolution(aasdk::proto::enums::VideoResolution::_1080p);
+        config->openauto_config->setVideoResolution(aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1920x1080);
     });
     group_layout->addWidget(res_1080_button);
 
@@ -240,13 +240,14 @@ QLayout *OpenAutoPage::Settings::rt_audio_row_widget()
 
     Switch *toggle = new Switch();
     toggle->scale(this->arbiter.layout().scale);
-    toggle->setChecked(this->config->openauto_config->getAudioOutputBackendType() ==
-                       openauto::configuration::AudioOutputBackendType::RTAUDIO);
-    connect(toggle, &Switch::stateChanged, [config = this->config](bool state) {
-        config->openauto_config->setAudioOutputBackendType(state
-                                                               ? openauto::configuration::AudioOutputBackendType::RTAUDIO
-                                                               : openauto::configuration::AudioOutputBackendType::QT);
-    });
+    //TODO fix for now im happy if video works
+    // toggle->setChecked(this->config->openauto_config->getAudioOutputBackendType() ==
+    //                    openauto::configuration::AudioOutputBackendType::RTAUDIO);
+    // connect(toggle, &Switch::stateChanged, [config = this->config](bool state) {
+    //     config->openauto_config->setAudioOutputBackendType(state
+    //                                                            ? openauto::configuration::AudioOutputBackendType::RTAUDIO
+    //                                                            : openauto::configuration::AudioOutputBackendType::QT);
+    // });
     layout->addWidget(toggle, 1, Qt::AlignHCenter);
 
     return layout;
@@ -270,9 +271,10 @@ QLayout *OpenAutoPage::Settings::audio_channels_row_widget()
     group_layout->addStretch(2);
 
     QCheckBox *speech_button = new QCheckBox("Speech", group);
-    speech_button->setChecked(this->config->openauto_config->speechAudioChannelEnabled());
-    connect(speech_button, &QCheckBox::toggled,
-            [config = this->config](bool checked) { config->openauto_config->setSpeechAudioChannelEnabled(checked); });
+        //TODO fix speech audio channel
+    // speech_button->setChecked(this->config->openauto_config->speechAudioChannelEnabled());
+    // connect(speech_button, &QCheckBox::toggled,
+    //         [config = this->config](bool checked) { config->openauto_config->setSpeechAudioChannelEnabled(checked); });
     group_layout->addWidget(speech_button);
 
     layout->addWidget(group, 1, Qt::AlignHCenter);
@@ -290,10 +292,10 @@ QLayout *OpenAutoPage::Settings::bluetooth_row_widget()
     Switch *toggle = new Switch();
     toggle->scale(this->arbiter.layout().scale);
     toggle->setChecked(this->config->openauto_config->getBluetoothAdapterType() ==
-                       openauto::configuration::BluetoothAdapterType::LOCAL);
+                       f1x::openauto::autoapp::configuration::BluetoothAdapterType::LOCAL);
     connect(toggle, &Switch::stateChanged, [config = this->config](bool state) {
-        config->openauto_config->setBluetoothAdapterType(state ? openauto::configuration::BluetoothAdapterType::LOCAL
-                                                               : openauto::configuration::BluetoothAdapterType::NONE);
+        config->openauto_config->setBluetoothAdapterType(state ? f1x::openauto::autoapp::configuration::BluetoothAdapterType::LOCAL
+                                                               : f1x::openauto::autoapp::configuration::BluetoothAdapterType::NONE);
     });
     layout->addWidget(toggle, 1, Qt::AlignHCenter);
 
@@ -308,11 +310,12 @@ QLayout *OpenAutoPage::Settings::autoconnect_row_widget()
     layout->addWidget(label, 1);
 
     Switch *toggle = new Switch();
-    toggle->scale(this->arbiter.layout().scale);
-    toggle->setChecked(this->config->openauto_config->getAutoconnectBluetooth());
-    connect(toggle, &Switch::stateChanged, [config = this->config](bool state){
-        config->openauto_config->setAutoconnectBluetooth(state);
-    });
+    //TODO fix bluetooth
+    // toggle->scale(this->arbiter.layout().scale);
+    // toggle->setChecked(this->config->openauto_config->getAutoconnectBluetooth());
+    // connect(toggle, &Switch::stateChanged, [config = this->config](bool state){
+    //     config->openauto_config->setAutoconnectBluetooth(state);
+    // });
     layout->addWidget(toggle, 1, Qt::AlignHCenter);
 
     return layout;
@@ -353,58 +356,58 @@ QLayout *OpenAutoPage::Settings::touchscreen_row_widget()
     return layout;
 }
 
-QCheckBox *OpenAutoPage::Settings::button_checkbox(QString name, QString key,
-                                                   aasdk::proto::enums::ButtonCode::Enum code)
-{
-    QCheckBox *checkbox = new QCheckBox(QString("%1 [%2]").arg(name).arg(key));
-    checkbox->setChecked(std::find(this->config->openauto_button_codes.begin(),
-                                   this->config->openauto_button_codes.end(),
-                                   code) != this->config->openauto_button_codes.end());
-    connect(checkbox, &QCheckBox::toggled, [config = this->config, code](bool checked) {
-        if (checked) {
-            config->openauto_button_codes.push_back(code);
-        }
-        else {
-            config->openauto_button_codes.erase(
-                std::remove(config->openauto_button_codes.begin(), config->openauto_button_codes.end(), code),
-                config->openauto_button_codes.end());
-        }
-    });
+// QCheckBox *OpenAutoPage::Settings::button_checkbox(QString name, QString key,
+//                                                    aasdk::proto::enums::ButtonCode::Enum code)
+// {
+//     QCheckBox *checkbox = new QCheckBox(QString("%1 [%2]").arg(name).arg(key));
+//     checkbox->setChecked(std::find(this->config->openauto_button_codes.begin(),
+//                                    this->config->openauto_button_codes.end(),
+//                                    code) != this->config->openauto_button_codes.end());
+//     connect(checkbox, &QCheckBox::toggled, [config = this->config, code](bool checked) {
+//         if (checked) {
+//             config->openauto_button_codes.push_back(code);
+//         }
+//         else {
+//             config->openauto_button_codes.erase(
+//                 std::remove(config->openauto_button_codes.begin(), config->openauto_button_codes.end(), code),
+//                 config->openauto_button_codes.end());
+//         }
+//     });
 
-    return checkbox;
-}
+//     return checkbox;
+// }
 
-QLayout *OpenAutoPage::Settings::buttons_row_widget()
-{
-    QHBoxLayout *layout = new QHBoxLayout();
+// QLayout *OpenAutoPage::Settings::buttons_row_widget()
+// {
+//     QHBoxLayout *layout = new QHBoxLayout();
 
-    QLabel *label = new QLabel("Buttons");
+//     QLabel *label = new QLabel("Buttons");
 
-    QGroupBox *group = new QGroupBox();
-    QVBoxLayout *group_layout = new QVBoxLayout(group);
+//     QGroupBox *group = new QGroupBox();
+//     QVBoxLayout *group_layout = new QVBoxLayout(group);
 
-    group_layout->addWidget(this->button_checkbox("Enter", "Enter", aasdk::proto::enums::ButtonCode::ENTER));
-    group_layout->addWidget(this->button_checkbox("Left", "Left", aasdk::proto::enums::ButtonCode::LEFT));
-    group_layout->addWidget(this->button_checkbox("Right", "Right", aasdk::proto::enums::ButtonCode::RIGHT));
-    group_layout->addWidget(this->button_checkbox("Up", "Up", aasdk::proto::enums::ButtonCode::UP));
-    group_layout->addWidget(this->button_checkbox("Down", "Down", aasdk::proto::enums::ButtonCode::DOWN));
-    group_layout->addWidget(this->button_checkbox("Back", "Esc", aasdk::proto::enums::ButtonCode::BACK));
-    group_layout->addWidget(this->button_checkbox("Home", "H", aasdk::proto::enums::ButtonCode::HOME));
-    group_layout->addWidget(this->button_checkbox("Phone", "P", aasdk::proto::enums::ButtonCode::PHONE));
-    group_layout->addWidget(this->button_checkbox("Call End", "O", aasdk::proto::enums::ButtonCode::CALL_END));
-    group_layout->addWidget(this->button_checkbox("Play", "X", aasdk::proto::enums::ButtonCode::PLAY));
-    group_layout->addWidget(this->button_checkbox("Pause", "C", aasdk::proto::enums::ButtonCode::PAUSE));
-    group_layout->addWidget(this->button_checkbox("Prev Track", "V", aasdk::proto::enums::ButtonCode::PREV));
-    group_layout->addWidget(this->button_checkbox("Next Track", "N", aasdk::proto::enums::ButtonCode::NEXT));
-    group_layout->addWidget(this->button_checkbox("Toggle Play", "B", aasdk::proto::enums::ButtonCode::TOGGLE_PLAY));
-    group_layout->addWidget(this->button_checkbox("Voice", "M", aasdk::proto::enums::ButtonCode::MICROPHONE_1));
-    group_layout->addWidget(this->button_checkbox("Scroll", "1/2", aasdk::proto::enums::ButtonCode::SCROLL_WHEEL));
+//     group_layout->addWidget(this->button_checkbox("Enter", "Enter", aasdk::proto::enums::ButtonCode::ENTER));
+//     group_layout->addWidget(this->button_checkbox("Left", "Left", aasdk::proto::enums::ButtonCode::LEFT));
+//     group_layout->addWidget(this->button_checkbox("Right", "Right", aasdk::proto::enums::ButtonCode::RIGHT));
+//     group_layout->addWidget(this->button_checkbox("Up", "Up", aasdk::proto::enums::ButtonCode::UP));
+//     group_layout->addWidget(this->button_checkbox("Down", "Down", aasdk::proto::enums::ButtonCode::DOWN));
+//     group_layout->addWidget(this->button_checkbox("Back", "Esc", aasdk::proto::enums::ButtonCode::BACK));
+//     group_layout->addWidget(this->button_checkbox("Home", "H", aasdk::proto::enums::ButtonCode::HOME));
+//     group_layout->addWidget(this->button_checkbox("Phone", "P", aasdk::proto::enums::ButtonCode::PHONE));
+//     group_layout->addWidget(this->button_checkbox("Call End", "O", aasdk::proto::enums::ButtonCode::CALL_END));
+//     group_layout->addWidget(this->button_checkbox("Play", "X", aasdk::proto::enums::ButtonCode::PLAY));
+//     group_layout->addWidget(this->button_checkbox("Pause", "C", aasdk::proto::enums::ButtonCode::PAUSE));
+//     group_layout->addWidget(this->button_checkbox("Prev Track", "V", aasdk::proto::enums::ButtonCode::PREV));
+//     group_layout->addWidget(this->button_checkbox("Next Track", "N", aasdk::proto::enums::ButtonCode::NEXT));
+//     group_layout->addWidget(this->button_checkbox("Toggle Play", "B", aasdk::proto::enums::ButtonCode::TOGGLE_PLAY));
+//     group_layout->addWidget(this->button_checkbox("Voice", "M", aasdk::proto::enums::ButtonCode::MICROPHONE_1));
+//     group_layout->addWidget(this->button_checkbox("Scroll", "1/2", aasdk::proto::enums::ButtonCode::SCROLL_WHEEL));
 
-    layout->addWidget(label, 1);
-    layout->addWidget(group, 1, Qt::AlignHCenter);
+//     layout->addWidget(label, 1);
+//     layout->addWidget(group, 1, Qt::AlignHCenter);
 
-    return layout;
-}
+//     return layout;
+// }
 
 OpenAutoPage::OpenAutoPage(Arbiter &arbiter, QWidget *parent)
     : QStackedWidget(parent)
@@ -435,10 +438,10 @@ void OpenAutoPage::init()
         }
     });
     
-    AAHandler *aa_handler = this->arbiter.android_auto().handler;
-    connect(&this->arbiter, &Arbiter::mode_changed, [this, aa_handler](Session::Theme::Mode mode){
-        aa_handler->setNightMode(mode == Session::Theme::Dark);
-    });
+    // AAHandler *aa_handler = this->arbiter.android_auto().handler;
+    // connect(&this->arbiter, &Arbiter::mode_changed, [this, aa_handler](Session::Theme::Mode mode){
+    //     aa_handler->setNightMode(mode == Session::Theme::Dark);
+    // });
 
     this->addWidget(this->connect_msg());
     this->addWidget(this->frame);

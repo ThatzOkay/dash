@@ -5,7 +5,7 @@
 
 Config::Config()
     : QObject(qApp),
-      openauto_config(std::make_shared<openauto::configuration::Configuration>()),
+      openauto_config(std::make_shared<f1x::openauto::autoapp::configuration::Configuration>()),
       openauto_button_codes(openauto_config->getButtonCodes()),
       settings()
 {

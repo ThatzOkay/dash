@@ -39,7 +39,7 @@ BluetoothPlayerTab::BluetoothPlayerTab(Arbiter &arbiter, QWidget *parent)
 QWidget *BluetoothPlayerTab::track_widget()
 {
     BluezQt::MediaPlayerPtr media_player = this->arbiter.system().bluetooth.get_media_player().second;
-    AAHandler *aa_handler = this->arbiter.android_auto().handler;
+    //AAHandler *aa_handler = this->arbiter.android_auto().handler;
 
     QWidget *widget = new QWidget(this);
     QVBoxLayout *layout = new QVBoxLayout(widget);
@@ -70,17 +70,17 @@ QWidget *BluetoothPlayerTab::track_widget()
         album->setText(track.album());
         title->setText(track.title());
     });
-    connect(aa_handler, &AAHandler::aa_media_metadata_update, [artist, album, title, albumArt](const aasdk::proto::messages::MediaInfoChannelMetadataData& metadata){
-        title->setText(QString::fromStdString(metadata.track_name()));
-        if(metadata.has_artist_name()) artist->setText(QString::fromStdString(metadata.artist_name()));
-        if(metadata.has_album_name()) album->setText(QString::fromStdString(metadata.album_name()));
-        if(metadata.has_album_art()){
-            QImage art;
-            art.loadFromData(QByteArray::fromStdString(metadata.album_art()));
-            albumArt->setPixmap(QPixmap::fromImage(art));
-        }
+    // connect(aa_handler, &AAHandler::aa_media_metadata_update, [artist, album, title, albumArt](const aasdk::proto::messages::MediaInfoChannelMetadataData& metadata){
+    //     title->setText(QString::fromStdString(metadata.track_name()));
+    //     if(metadata.has_artist_name()) artist->setText(QString::fromStdString(metadata.artist_name()));
+    //     if(metadata.has_album_name()) album->setText(QString::fromStdString(metadata.album_name()));
+    //     if(metadata.has_album_art()){
+    //         QImage art;
+    //         art.loadFromData(QByteArray::fromStdString(metadata.album_art()));
+    //         albumArt->setPixmap(QPixmap::fromImage(art));
+    //     }
     
-    });
+    // });
 
 
     return widget;
