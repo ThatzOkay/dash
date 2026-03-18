@@ -14,7 +14,7 @@ OpenAutoWorker::OpenAutoWorker(std::function<void(bool)> callback, bool night_mo
       usb_wrapper((libusb_init(&usb_context), usb_context)),
       query_factory(usb_wrapper, io_service),
       query_chain_factory(usb_wrapper, io_service, query_factory),
-      service_factory(io_service, configuration),
+      service_factory(io_service, configuration, frame),
       android_auto_entity_factory(io_service, configuration, service_factory),
       usb_hub(std::make_shared<aasdk::usb::USBHub>(usb_wrapper, io_service, query_chain_factory)),
       connected_accessories_enumerator(
@@ -26,8 +26,8 @@ OpenAutoWorker::OpenAutoWorker(std::function<void(bool)> callback, bool night_mo
     this->create_io_service_workers();
 
     this->app->waitForUSBDevice();
-    // AAHandler *aa_handler = arbiter.android_auto().handler;
-    // service_factory.setAndroidAutoInterface(aa_handler);
+    AAHandler *aa_handler = arbiter.android_auto().handler;
+    //service_factory.setAndroidAutoInterface(aa_handler);
     // aa_handler->setServiceFactory(&service_factory);
 }
 
